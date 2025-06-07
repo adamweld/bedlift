@@ -24,6 +24,8 @@
 #include <WiFi.h>
 #include <esp_wifi.h>
 
+#include "../motor/motor.h"
+
 #define FW_VERISON "v0.1"
 #define BUZZ_PIN 3
 #define POWER_HOLD_PIN 46
@@ -75,7 +77,12 @@ public:
     bool _check_encoder(bool playBuzz = true);
     void _encoder_test();
     void _encoder_test_new();
-    void _encoder_test_user(int motor);
+    void _encoder_test_user();
+
+    /* Motor */
+    Motor motor;
+    float _motor_speed;
+    void _motor_user(int m_id);
 
     /* Buzzer */
     inline void _tone(unsigned int frequency, unsigned long duration = 0UL) { tone(BUZZ_PIN, frequency, duration); }

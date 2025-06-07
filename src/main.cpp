@@ -9,6 +9,7 @@
  *
  */
 #include "factory_test/factory_test.h"
+#include "motor/motor.h"
 
 static FactoryTest ft;
 
@@ -21,4 +22,7 @@ void setup()
     view_create(&ft);
 }
 
-void loop() { view_update(); }
+void loop() {
+    view_update();
+    ft.motor.update();
+}

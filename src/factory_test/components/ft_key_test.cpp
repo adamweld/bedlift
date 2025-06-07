@@ -349,9 +349,9 @@ void FactoryTest::_encoder_test_new()
     printf("quit encoder test\n");
 }
 
-void FactoryTest::_encoder_test_user(int motor)
+void FactoryTest::_encoder_test_user()
 {
-    printf("Selected Motor %d\n", motor);
+    printf("Encoder Test");
 
     _canvas->setFont(&fonts::Font0);
 
@@ -367,10 +367,7 @@ void FactoryTest::_encoder_test_user(int motor)
         _canvas->fillRect(0, 0, 240, 25, (uint32_t)0x163820);
         _canvas->setTextSize(2);
         _canvas->setTextColor((uint32_t)0x6AB8A0);
-        if (motor == 0)
-            snprintf(string_buffer, 20, "All Motors");
-        else
-            snprintf(string_buffer, 20, "Motor %d", motor);
+        snprintf(string_buffer, 20, "Encoder Test");
         _canvas->drawCenterString(string_buffer, _canvas->width() / 2, 5);
 
         _canvas->setTextSize(5);
@@ -389,3 +386,44 @@ void FactoryTest::_encoder_test_user(int motor)
 
     printf("quit encoder test\n");
 }
+
+// void FactoryTest::_motor_user(int m_id)
+// {
+//     printf("Selected Motor %d\n", m_id);
+
+//     _canvas->setFont(&fonts::Font0);
+
+//     char string_buffer[20];
+
+//     _enc_pos = 0;
+//     _enc.setPosition(_enc_pos);
+
+//     while (1)
+//     {
+//         _canvas->fillScreen((uint32_t)0x6AB8A0);
+
+//         _canvas->fillRect(0, 0, 240, 25, (uint32_t)0x163820);
+//         _canvas->setTextSize(2);
+//         _canvas->setTextColor((uint32_t)0x6AB8A0);
+//         if (m_id == 0)
+//             snprintf(string_buffer, 20, "All Motors");
+//         else
+//             snprintf(string_buffer, 20, "Motor %d", m_id);
+//         _canvas->drawCenterString(string_buffer, _canvas->width() / 2, 5);
+
+//         _canvas->setTextSize(5);
+//         _canvas->setTextColor((uint32_t)0x163820);
+//         snprintf(string_buffer, 20, "%d", _enc_pos);
+//         _canvas->drawCenterString(string_buffer, _canvas->width() / 2, 55);
+
+//         _canvas_update();
+
+//         _check_encoder();
+//         if (_check_next())
+//         {
+//             break;
+//         }
+//     }
+
+//     printf("quit motor test\n");
+// }

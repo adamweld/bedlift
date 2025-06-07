@@ -25,6 +25,9 @@ void FactoryTest::init()
 
     _enc.setCount(0);
 
+    // motor init
+    motor.init();
+
     // if (_check_test_mode())
     // {
     //     start_factory_test();

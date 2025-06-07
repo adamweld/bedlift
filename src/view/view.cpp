@@ -9,6 +9,7 @@
  *
  */
 #include "../factory_test/factory_test.h"
+#include "../motor/motor.h"
 #include "assets/assets.h"
 #include <Arduino.h>
 #include <smooth_ui_toolkit.h>
@@ -28,11 +29,11 @@ struct AppOptionRenderProps_t
 constexpr int _app_render_props_list_size = 8;
 constexpr AppOptionRenderProps_t _app_render_props_list[] = {
     // {0xF6A4A4, 0x762424, "WIFI SCAN", image_data_icon_wifi},
-    {0x6AB8A0, 0x163820, "ALL MOTORS", image_data_icon_encoder},
-    {0x6AB8A0, 0x163820, "MOTOR 1", image_data_icon_encoder},
-    {0x6AB8A0, 0x163820, "MOTOR 2", image_data_icon_encoder},
-    {0x6AB8A0, 0x163820, "MOTOR 3", image_data_icon_encoder},
-    {0x6AB8A0, 0x163820, "MOTOR 4", image_data_icon_encoder},
+    {0x264653, 0xa8c9d7, "ALL MOTORS", image_data_icon_encoder}, //https://coolors.co/palette/264653-2a9d8f-e9c46a-f4a261-e76f51
+    {0x2a9d8f, 0x0b2825, "MOTOR 1", image_data_icon_encoder},
+    {0xe9c46a, 0x43330a, "MOTOR 2", image_data_icon_encoder},
+    {0xf4a261, 0x482305, "MOTOR 3", image_data_icon_encoder},
+    {0xe76f51, 0x431509, "MOTOR 4", image_data_icon_encoder},
     {0xB8DBD9, 0x385B59, "DISPLAY TEST", image_data_icon_display},
     {0x87C38F, 0x07430F, "BRIGHTNESS", image_data_icon_brightness},
     {0xC9C9EE, 0x49496E, "RTC TIME", image_data_icon_rtc},
@@ -50,6 +51,8 @@ static std::uint32_t _batv_time_count = 0;
 static char _batv[10] = {0};
 static int _last_enc_postion = 0;
 static bool _is_just_boot_in = true;
+
+static std::uint32_t _motor_time_count = 0;
 
 class LauncherMenu : public SmoothOptions
 {
@@ -218,15 +221,15 @@ class LauncherMenu : public SmoothOptions
     {
         int matching_index = getSelectedOptionIndex();
         if (matching_index == 0)
-            _ft->_encoder_test_user(0);
+            _ft->_motor_user(0);
         else if (matching_index == 1)
-            _ft->_encoder_test_user(1);
+            _ft->_motor_user(1);
         else if (matching_index == 2)
-            _ft->_encoder_test_user(2);
+            _ft->_motor_user(2);
         else if (matching_index == 3)
-            _ft->_encoder_test_user(3);
+            _ft->_motor_user(3);
         else if (matching_index == 4)
-            _ft->_encoder_test_user(4);
+            _ft->_motor_user(4);
         else if (matching_index == 5)
             _ft->_disp_test();
         else if (matching_index == 6)
@@ -304,5 +307,13 @@ void view_update()
         float bat_v = (float)analogReadMilliVolts(10) * 2 / 1000;
         snprintf(_batv, 10, "%.1fV", bat_v);
         _batv_time_count = millis();
+
     }
+
+    if (millis() - _motor_time_count > 100)
+    {
+        _ft->motor.update();
+        _motor_time_count = millis();
+    }
+    // update motor on a timer here
 }

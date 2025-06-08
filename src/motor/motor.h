@@ -2,11 +2,15 @@
 #pragma once
 #include "driver/twai.h"
 #include "../xiaomi_cybergear/xiaomi_cybergear_driver.h"
-#include "../4relay/Unit_4RELAY.h"
+#include <M5_4Relay.h>
+#include <Wire.h>
 
 // Pins used to connect to CAN bus transceiver:
 #define RX_PIN 1
 #define TX_PIN 2
+
+#define SDA_PIN 13
+#define SCL_PIN 15
 
 #define MASTER_CAN_ID 0x00
 
@@ -18,7 +22,7 @@
 #define MOTOR_MODE MODE_SPEED
 // #define MOTOR_MODE MODE_POSITION
 #define MOTOR_LIMIT_SPEED 10.0f
-#define MOTOR_LIMIT_CURRENT 5.0
+#define MOTOR_LIMIT_CURRENT 10.0
 
 
 class Motor
@@ -30,7 +34,7 @@ class Motor
     };
 
     // Relay
-    UNIT_4RELAY relay;
+    M5_4Relay relay;
 
     // Variables
     uint8_t _rx_can_id;

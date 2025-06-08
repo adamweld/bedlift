@@ -5,8 +5,9 @@ void Motor::init()
     // intialize CAN, only done once
     _motors[0].init_twai(RX_PIN, TX_PIN, /*serial_debug=*/true);
 
-    relay.begin();
-    relay.Init(1);
+    relay.begin(Wire1,SDA_PIN,SCL_PIN);
+    relay.SyncMode(true);
+    relay.AllOff();
 
     // init motors one by one
     for(XiaomiCyberGearDriver m : _motors){
@@ -122,17 +123,20 @@ void Motor::disable(int m_id)
 void Motor::unlock(int m_id)
 {
     if ( m_id == 0 ) {
-        relay.relayAll(1);
+        relay.Write4Relay(0,true);
+        relay.Write4Relay(1,true);
+        relay.Write4Relay(2,true);
+        relay.Write4Relay(3,true);
     } else {
-        relay.relayWrite(m_id-1, 1);
+        relay.Write4Relay(m_id-1,true);
     }
 }
 
 void Motor::lock(int m_id)
 {
     if ( m_id == 0 ) {
-        relay.relayAll(0);
+        relay.AllOff();
     } else {
-        relay.relayWrite(m_id-1, 0);
+        relay.Write4Relay(m_id-1,false);
     }
 }

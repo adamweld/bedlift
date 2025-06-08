@@ -9,7 +9,6 @@
  *
  */
 #include "factory_test/factory_test.h"
-#include "motor/motor.h"
 
 static FactoryTest ft;
 
@@ -18,6 +17,7 @@ void view_update();
 
 void setup()
 {
+    printf("I'm Alive!");
     ft.init();
     view_create(&ft);
 }

@@ -4,11 +4,14 @@ void Motor::init()
 {
     // intialize CAN, only done once
     _motors[0].init_twai(RX_PIN, TX_PIN, /*serial_debug=*/true);
+    // _motors[0].init_twai(RX_PIN, TX_PIN, /*serial_debug=*/false);
+
 
     relay.begin(Wire1,SDA_PIN,SCL_PIN);
     relay.SyncMode(true);
     relay.AllOff();
 
+    return;
     // init motors one by one
     for(XiaomiCyberGearDriver m : _motors){
         m.init_motor(MOTOR_MODE);

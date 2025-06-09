@@ -3,7 +3,8 @@
 #include "driver/twai.h"
 #include "../xiaomi_cybergear/xiaomi_cybergear_driver.h"
 #include <M5_4Relay.h>
-#include <Wire.h>
+#include "../4relay/4relay.h"
+// #include <Wire.h>
 
 // Pins used to connect to CAN bus transceiver:
 #define RX_PIN 1
@@ -31,10 +32,15 @@ class Motor
     // Cybergear motors
     XiaomiCyberGearDriver _motors[NUM_MOTORS] = {
         XiaomiCyberGearDriver(0x01, MASTER_CAN_ID),
+        // XiaomiCyberGearDriver(0x02, MASTER_CAN_ID),
+        // XiaomiCyberGearDriver(0x03, MASTER_CAN_ID),
+        // XiaomiCyberGearDriver(0x04, MASTER_CAN_ID),
     };
 
     // Relay
     M5_4Relay relay;
+
+    // MODULE_4RELAY relay2;
 
     // Variables
     uint8_t _rx_can_id;

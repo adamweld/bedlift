@@ -24,5 +24,6 @@ void setup()
 
 void loop() {
     view_update();
-    ft.motor.update();
+    // ft.motor.update();
+    // delay(1000);
 }

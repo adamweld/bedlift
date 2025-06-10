@@ -44,21 +44,10 @@ void Motor::init()
 
 void Motor::update()
 {
-    // check_alerts();
-    // for(XiaomiCyberGearDriver m : _motors){
-    //     m.request_status();
-    //     XiaomiCyberGearStatus cs = m.get_status();
-    //     printf("M%dPOS:%f V:%f T:%f temp:%d\t", m.get_motor_can_id(), cs.position, cs.speed, cs.torque, cs.temperature);
-    // }
-    // printf("\n");
-
-
-    
     /* request status */
     for(cybergear_motor_t* m : _motors){
         cybergear_request_status(m);
     }
-    
 
     /* handle CAN alerts */ 
     twai_read_alerts(&alerts_triggered, POLLING_RATE_TICKS);
@@ -79,38 +68,29 @@ void Motor::update()
         ESP_LOGE(TAG, "TX error: %lu\t", twai_status.tx_error_counter);
         ESP_LOGE(TAG, "TX failed: %lu\n", twai_status.tx_failed_count);
     }
+
     /* handle received messages */
     if (alerts_triggered & TWAI_ALERT_RX_DATA) 
     {
-
-        // uint8_t _rx_can_id = (message.identifier & 0xFF00) >> 8;
-
-        // for(cybergear_motor_t* m : _motors) {
-        //     if(m->can_id == _rx_can_id) {
-        //         cybergear_process_message(m, &message);
-        //         break; // Found the matching motor, no need to check further
-        //     }
-        // }
         while (twai_receive(&message, 0) == ESP_OK)
         {
             for (cybergear_motor_t* m : _motors) {
                 esp_err_t response = cybergear_process_message(m, &message);
-                // if (response == ESP_ERR_NOT_FOUND) {
-                //     continue;
-                // }
-                // else if (response == ESP_OK) {
-                //     break;
-                // }
-                // else {
-                //     ESP_ERROR_CHECK_WITHOUT_ABORT(response);
-                // }
-
+                if (response == ESP_ERR_NOT_FOUND) {
+                    continue;
+                }
+                else if (response == ESP_OK) {
+                    break;
+                }
+                else {
+                    ESP_ERROR_CHECK_WITHOUT_ABORT(response);
+                }
             }
         }
         /* get cybergear status*/
         for(cybergear_motor_t* m : _motors){
             cybergear_get_status(m, &status);
-            // printf("M1 POS:%f V:%f T:%f temp:%f\t", status.position, status.speed, status.torque, status.temperature);
+// printf("M1 POS:%f V:%f T:%f temp:%f\t", status.position, status.speed, status.torque, status.temperature);
             printf("M%d:%c V:%.2f T:%.2f\t",m->can_id, state_as_char(status.state), status.speed, status.torque);
 
             /* get cybergear faults */
@@ -120,55 +100,61 @@ void Motor::update()
                 cybergear_get_faults(m, &faults);
                 cybergear_print_faults(&faults);
             }
+
+
+            // print_motor(m);
         }
+            // printf("M1 POS:%f V:%f T:%f temp:%f\t", status.position, status.speed, status.torque, status.temperature);
         printf("\n");
     }
+}
 
-    
-    // m1.request_status();
-    // XiaomiCyberGearStatus cs = m1.get_status();
-    // printf("POS:%f V:%f T:%f temp:%d\n", cs.position, cs.speed, cs.torque, cs.temperature);
+void Motor::print_motor(cybergear_motor_t* m)
+{
+    char fault_char = '*';
+    if(cybergear_has_faults(m))
+    {
+        fault_char = 'X';
+        cybergear_fault_t faults;
+        cybergear_get_faults(m, &faults);
+        cybergear_print_faults(&faults);
+    }   
+
+    printf("M%d:%c%c V:%.2f R:%d T:%.2f\t",m->can_id, state_as_char(m->status.state),fault_char, m->status.speed, m->params.rotation, m->status.torque);
+
+    /* get cybergear faults */
+   
 }
 
 
 void Motor::set_speed(float speed, int m_id)
 {
-    // printf("Selected Motor %d set speed to %f\n",m_id, speed);
-    // if ( m_id == 0 ) {
-    //     for(XiaomiCyberGearDriver m : _motors){
-    //         m.set_speed_ref(speed);
-    //     }
-    // } else {
-    //     _motors[m_id-1].set_speed_ref(speed);
-    // }
-
-    cybergear_set_speed(_motors[m_id-1], speed);
+    if(m_id == 0) {
+       for(cybergear_motor_t* m : _motors){ cybergear_set_speed(m, speed); }
+    }
+    else{
+        cybergear_set_speed(_motors[m_id-1], speed);
+    }
 }
 
 void Motor::enable(int m_id)
 {
-    // if ( m_id == 0 ) {
-    //     for(XiaomiCyberGearDriver m : _motors){
-    //         m.enable_motor();
-    //         m.set_position_ref(0.0);
-    //     }
-    // } else {
-    //     _motors[m_id-1].enable_motor();
-    //     _motors[m_id-1].set_position_ref(0.0);
-    // }
-    cybergear_enable(_motors[m_id-1]);
+    if(m_id == 0) {
+       for(cybergear_motor_t* m : _motors){ cybergear_enable(m); }
+    }
+    else{
+        cybergear_enable(_motors[m_id-1]);
+    }
 }
 
 void Motor::disable(int m_id)
 {
-    // if ( m_id == 0 ) {
-    //     for(XiaomiCyberGearDriver m : _motors){
-    //         m.stop_motor();
-    //     }
-    // } else {
-    //     _motors[m_id-1].stop_motor();
-    // }
-    cybergear_stop(_motors[m_id-1]);
+    if(m_id == 0) {
+       for(cybergear_motor_t* m : _motors){ cybergear_stop(m); }
+    }
+    else{
+        cybergear_stop(_motors[m_id-1]);
+    }
 }
 
 void Motor::unlock(int m_id)

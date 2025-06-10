@@ -72,6 +72,7 @@ public:
     }
     void init();
     void update();
+    void print_motor(cybergear_motor_t* m);
     // void check_alerts();
     // void handle_rx_message(twai_message_t& message);
     void set_speed(float speed, int m_id);

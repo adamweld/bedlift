@@ -77,7 +77,6 @@ esp_err_t cybergear_process_message(cybergear_motor_t *motor, twai_message_t *me
 {
     uint8_t can_id = (message->identifier & 0xFF00) >> 8;
     uint8_t packet_type = (message->identifier & 0x3F000000) >> 24;
-    printf("Received CAN ID: 0x%02X\n", can_id);
 
     if(can_id != motor->can_id)
     {
@@ -207,7 +206,7 @@ esp_err_t _send_can_option_package(cybergear_motor_t *motor, uint8_t cmd_id, uin
     uint32_t id = cmd_id << 24 | option << 8 | motor->can_id;
     
     twai_message_t message;
-    message.extd = id;
+    message.extd = 1;
     message.identifier = id;
     message.data_length_code = len;
     for (int i = 0; i < len; i++) {

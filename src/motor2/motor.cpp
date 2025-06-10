@@ -32,6 +32,8 @@ void Motor::init()
 
     // init motors one by one
     for(cybergear_motor_t* m : _motors){
+        printf("Intializing Motor CAN ID: 0x%02X\n", m->can_id);
+
         ESP_ERROR_CHECK(cybergear_stop(m));
         cybergear_set_mode(m, CYBERGEAR_MODE_SPEED);
         cybergear_set_limit_speed(m, MOTOR_LIMIT_SPEED);
@@ -91,13 +93,18 @@ void Motor::update()
         // }
         while (twai_receive(&message, 0) == ESP_OK)
         {
-            uint8_t _rx_can_id = (message.identifier & 0xFF00) >> 8;
-
             for (cybergear_motor_t* m : _motors) {
-                if (m->can_id == _rx_can_id) {
-                    cybergear_process_message(m, &message);
-                    break;
-                }
+                esp_err_t response = cybergear_process_message(m, &message);
+                // if (response == ESP_ERR_NOT_FOUND) {
+                //     continue;
+                // }
+                // else if (response == ESP_OK) {
+                //     break;
+                // }
+                // else {
+                //     ESP_ERROR_CHECK_WITHOUT_ABORT(response);
+                // }
+
             }
         }
         /* get cybergear status*/

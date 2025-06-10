@@ -17,6 +17,7 @@ void view_update();
 
 void setup()
 {
+    delay(5000);
     ft.init();
     view_create(&ft);
 }

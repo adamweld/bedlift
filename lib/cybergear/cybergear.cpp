@@ -77,6 +77,8 @@ esp_err_t cybergear_process_message(cybergear_motor_t *motor, twai_message_t *me
 {
     uint8_t can_id = (message->identifier & 0xFF00) >> 8;
     uint8_t packet_type = (message->identifier & 0x3F000000) >> 24;
+    printf("Received CAN ID: 0x%02X\n", can_id);
+
     if(can_id != motor->can_id)
     {
         return ESP_ERR_NOT_FOUND;

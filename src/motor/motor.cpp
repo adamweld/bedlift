@@ -73,7 +73,7 @@ void Motor::check_alerts(){
 
 void Motor::handle_rx_message(twai_message_t& message) {
     _rx_can_id = ( message.identifier & 0xFF00) >> 8;
-    printf("Received CAN ID: 0x%02X\n", _rx_can_id);
+    // printf("Received CAN ID: 0x%02X\n", _rx_can_id);
 
     for(int ii = 0; ii < NUM_MOTORS; ii++){
         if (_rx_can_id == _motors[ii].get_motor_can_id()){

@@ -47,6 +47,8 @@ void Motor::update()
     /* request status */
     for(cybergear_motor_t* m : _motors){
         cybergear_request_status(m);
+        cybergear_get_param(m, ADDR_ROTATION);
+        cybergear_get_param(m, ADDR_MECH_POS);
     }
 
     /* handle CAN alerts */ 
@@ -58,15 +60,11 @@ void Motor::update()
     }
     if (alerts_triggered & TWAI_ALERT_BUS_ERROR)
     {
-        ESP_LOGE(TAG, "Alert: A (Bit, Stuff, CRC, Form, ACK) error has occurred on the bus.");
-        ESP_LOGE(TAG, "Bus error count: %lu\n", twai_status.bus_error_count);
+        ESP_LOGE(TAG, "Alert: An error has occurred on the bus.Bus error count: %lu\n", twai_status.bus_error_count);
     }
     if (alerts_triggered & TWAI_ALERT_TX_FAILED)
     {
-        ESP_LOGE(TAG, "Alert: The Transmission failed.");
-        ESP_LOGE(TAG, "TX buffered: %lu\t", twai_status.msgs_to_tx);
-        ESP_LOGE(TAG, "TX error: %lu\t", twai_status.tx_error_counter);
-        ESP_LOGE(TAG, "TX failed: %lu\n", twai_status.tx_failed_count);
+        ESP_LOGE(TAG, "Alert: The Transmission failed. buffered: %lu\terror: %lu\tfailed: %lu\n", twai_status.msgs_to_tx, twai_status.tx_error_counter, twai_status.tx_failed_count);
     }
 
     /* handle received messages */
@@ -90,19 +88,19 @@ void Motor::update()
         /* get cybergear status*/
         for(cybergear_motor_t* m : _motors){
             cybergear_get_status(m, &status);
-// printf("M1 POS:%f V:%f T:%f temp:%f\t", status.position, status.speed, status.torque, status.temperature);
-            printf("M%d:%c V:%.2f T:%.2f\t",m->can_id, state_as_char(status.state), status.speed, status.torque);
+// // printf("M1 POS:%f V:%f T:%f temp:%f\t", status.position, status.speed, status.torque, status.temperature);
+//             printf("M%d:%c V:%.2f T:%.2f\t",m->can_id, state_as_char(status.state), status.speed, status.torque);
 
-            /* get cybergear faults */
-            if(cybergear_has_faults(m))
-            {
-                cybergear_fault_t faults;
-                cybergear_get_faults(m, &faults);
-                cybergear_print_faults(&faults);
-            }
+//             /* get cybergear faults */
+//             if(cybergear_has_faults(m))
+//             {
+//                 cybergear_fault_t faults;
+//                 cybergear_get_faults(m, &faults);
+//                 cybergear_print_faults(&faults);
+//             }
 
 
-            // print_motor(m);
+            print_motor(m);
         }
             // printf("M1 POS:%f V:%f T:%f temp:%f\t", status.position, status.speed, status.torque, status.temperature);
         printf("\n");
@@ -117,10 +115,22 @@ void Motor::print_motor(cybergear_motor_t* m)
         fault_char = 'X';
         cybergear_fault_t faults;
         cybergear_get_faults(m, &faults);
-        cybergear_print_faults(&faults);
+        
+        ESP_LOGI(TAG, "Fault Overload: %s",btoa(faults->overload));
+        ESP_LOGI(TAG, "Fault Uncalibrated: %s",btoa(faults->uncalibrated));
+        ESP_LOGI(TAG, "Fault Over-Current Phase A: %s",btoa(faults->over_current_phase_a));
+        ESP_LOGI(TAG, "Fault Over-Current Phase B: %s",btoa(faults->over_current_phase_b));
+        ESP_LOGI(TAG, "Fault Over-Current Phase C: %s",btoa(faults->over_current_phase_c));
+        ESP_LOGI(TAG, "Fault Over Voltage: %s",btoa(faults->over_voltage));
+        ESP_LOGI(TAG, "Fault Under Voltage: %s",btoa(faults->under_voltage));
+        ESP_LOGI(TAG, "Fault Driver-Chip: %s",btoa(faults->driver_chip));
+        ESP_LOGI(TAG, "Fault Over-Temperature: %s",btoa(faults->over_temperature));
+        ESP_LOGI(TAG, "Fault Magnetic Encoder: %s",btoa(faults->magnetic_code_failure));
+        ESP_LOGI(TAG, "Fault Hall-Coded: %s",btoa(faults->hall_coded_faults));
+
     }   
 
-    printf("M%d:%c%c V:%.2f R:%d T:%.2f\t",m->can_id, state_as_char(m->status.state),fault_char, m->status.speed, m->params.rotation, m->status.torque);
+    printf("M%d:%c%c V:%.2f R:%f T:%.2f\t",m->can_id, state_as_char(m->status.state),fault_char, m->status.speed, m->params.mech_pos, m->status.torque);
 
     /* get cybergear faults */
    

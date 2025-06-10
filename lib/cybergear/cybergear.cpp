@@ -1,4 +1,4 @@
-#include <string.h>
+#include <cstring>
 #include "driver/twai.h"
 #include "cybergear.h"
 

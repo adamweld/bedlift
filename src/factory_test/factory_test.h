@@ -24,7 +24,7 @@
 #include <WiFi.h>
 #include <esp_wifi.h>
 
-#include "../motor/motor.h"
+#include "../motor2/motor.h"
 
 #define FW_VERISON "v0.1"
 #define BUZZ_PIN 3

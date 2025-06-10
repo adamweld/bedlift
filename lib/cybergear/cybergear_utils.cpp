@@ -35,6 +35,21 @@ const char *as_string(cybergear_state_e state)
     }
 }
 
+char state_as_char(cybergear_state_e state)
+{
+    switch ((state))
+    {
+    case CYBERGEAR_STATE_RESET:
+        return 'X';
+    case CYBERGEAR_STATE_CALIBRATION:
+        return 'C';
+    case CYBERGEAR_STATE_RUNNING:
+        return 'R';
+    default:
+        return 'U';
+    }
+}
+
 void cybergear_print_status(cybergear_status_t *status)
 {
     ESP_LOGI(TAG, "Temp: %f [°C] Mode: %s Pos: %f Speed: %f [rad/s] Torgue: %f [Nm]", 

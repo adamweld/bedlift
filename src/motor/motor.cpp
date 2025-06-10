@@ -24,8 +24,9 @@ void Motor::update()
     for(XiaomiCyberGearDriver m : _motors){
         m.request_status();
         XiaomiCyberGearStatus cs = m.get_status();
-        printf("POS:%f V:%f T:%f temp:%d\n", cs.position, cs.speed, cs.torque, cs.temperature);
+        printf("M%dPOS:%f V:%f T:%f temp:%d\t", m.get_motor_can_id(), cs.position, cs.speed, cs.torque, cs.temperature);
     }
+    printf("\n");
     
     // m1.request_status();
     // XiaomiCyberGearStatus cs = m1.get_status();
@@ -46,6 +47,8 @@ void Motor::check_alerts(){
     if (alerts_triggered & TWAI_ALERT_BUS_ERROR) {
         printf("Alert: A (Bit, Stuff, CRC, Form, ACK) error has occurred on the bus.\n");
         printf("Bus error count: %d\n", twai_status.bus_error_count);
+        printf("resetting motors");
+        reset();
     }
     if (alerts_triggered & TWAI_ALERT_TX_FAILED) {
         printf("Alert: The Transmission failed.\n");
@@ -88,7 +91,7 @@ void Motor::handle_rx_message(twai_message_t& message) {
 
 void Motor::set_speed(float speed, int m_id)
 {
-    printf("Selected Motor %d set speed to %f\n",m_id, speed);;
+    // printf("Selected Motor %d set speed to %f\n",m_id, speed);
     if ( m_id == 0 ) {
         for(XiaomiCyberGearDriver m : _motors){
             m.set_speed_ref(speed);
@@ -103,9 +106,11 @@ void Motor::enable(int m_id)
     if ( m_id == 0 ) {
         for(XiaomiCyberGearDriver m : _motors){
             m.enable_motor();
+            m.set_position_ref(0.0);
         }
     } else {
         _motors[m_id-1].enable_motor();
+        _motors[m_id-1].set_position_ref(0.0);
     }
 }
 
@@ -139,4 +144,16 @@ void Motor::lock(int m_id)
     } else {
         relay.Write4Relay(m_id-1,false);
     }
+}
+
+void Motor::reset()
+{
+    // _motors[0].init_motor
+    // Install TWAI driver
+    if (twai_driver_uninstall() == ESP_OK) {
+        printf("Uninstalled TWAI driver\n");
+    } else {
+        printf("Failed to uninstall TWAI driver\n");
+    }
+    init();
 }

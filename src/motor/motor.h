@@ -18,11 +18,13 @@
 #define TRANSMIT_RATE_MS 100
 #define POLLING_RATE_MS 100
 
-#define NUM_MOTORS 1
+#define NUM_MOTORS 4
 #define MOTOR_MODE MODE_SPEED
 // #define MOTOR_MODE MODE_POSITION
 #define MOTOR_LIMIT_SPEED 10.0f
-#define MOTOR_LIMIT_CURRENT 10.0
+// #define MOTOR_LIMIT_CURRENT 27.0 //max
+#define MOTOR_LIMIT_CURRENT 7
+
 
 
 class Motor
@@ -31,6 +33,9 @@ class Motor
     // Cybergear motors
     XiaomiCyberGearDriver _motors[NUM_MOTORS] = {
         XiaomiCyberGearDriver(0x01, MASTER_CAN_ID),
+        XiaomiCyberGearDriver(0x02, MASTER_CAN_ID),
+        XiaomiCyberGearDriver(0x03, MASTER_CAN_ID),
+        XiaomiCyberGearDriver(0x04, MASTER_CAN_ID),
     };
 
     // Relay
@@ -52,4 +57,5 @@ public:
     void disable(int m_id);
     void unlock(int m_id);
     void lock(int m_id);
+    void reset();
 };

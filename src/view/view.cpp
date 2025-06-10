@@ -34,10 +34,10 @@ constexpr AppOptionRenderProps_t _app_render_props_list[] = {
     {0xe9c46a, 0x43330a, "MOTOR 2", image_data_icon_encoder},
     {0xf4a261, 0x482305, "MOTOR 3", image_data_icon_encoder},
     {0xe76f51, 0x431509, "MOTOR 4", image_data_icon_encoder},
-    {0xB8DBD9, 0x385B59, "DISPLAY TEST", image_data_icon_display},
-    {0x87C38F, 0x07430F, "BRIGHTNESS", image_data_icon_brightness},
     {0xC9C9EE, 0x49496E, "RTC TIME", image_data_icon_rtc},
-    {0xC6D5EF, 0x46556F, "SLEEP&WAKEUP", image_data_icon_sleep},
+    // {0xB8DBD9, 0x385B59, "DISPLAY TEST", image_data_icon_display},
+    {0x87C38F, 0x07430F, "BRIGHTNESS", image_data_icon_brightness},
+    // {0xC6D5EF, 0x46556F, "SLEEP&WAKEUP", image_data_icon_sleep},
     {0xCEDBB8, 0x4E5B38, "POWER OFF", image_data_icon_poweroff},
 
     // {0xC2C1A5, 0x424125, "MENU DEMO", image_data_icon_menu},
@@ -230,12 +230,14 @@ class LauncherMenu : public SmoothOptions
             _ft->_motor_user(3);
         else if (matching_index == 4)
             _ft->_motor_user(4);
+        // else if (matching_index == 5)
+        //     _ft->_disp_test();
         else if (matching_index == 5)
-            _ft->_disp_test();
+            _ft->_rtc_test();
         else if (matching_index == 6)
             _ft->_disp_set_brightness();
-        else if (matching_index == 7)
-            _ft->_rtc_test();
+        // else if (matching_index == 7)
+        //     _ft->_rtc_test();
         // else if (matching_index == 3)
         //     _ft->_wifi_test();
         // else if (matching_index == 4)
@@ -245,9 +247,9 @@ class LauncherMenu : public SmoothOptions
         //     printf("todo\n");
         // else if (matching_index == 5)
         //     _ft->_arkanoid_start();
-        else if (matching_index == 8)
-            _ft->_rtc_wakeup_test_user();
-        else if (matching_index == 9)
+        // else if (matching_index == 8)
+        //     _ft->_rtc_wakeup_test_user();
+        else if (matching_index == 7)
             _ft->_power_off();
     }
 };
@@ -302,18 +304,18 @@ void view_update()
     _batv_panel_transition->update(millis());
 
     // Read bat voltage
-    if (millis() - _batv_time_count > 3000)
+    if (millis() - _ft->_batv_time_count > 3000)
     {
         float bat_v = (float)analogReadMilliVolts(10) * 2 / 1000;
         snprintf(_batv, 10, "%.1fV", bat_v);
-        _batv_time_count = millis();
+        _ft->_batv_time_count = millis();
 
     }
 
-    if (millis() - _motor_time_count > 100)
+    if (millis() - _ft->_motor_time_count > 500)
     {
         _ft->motor.update();
-        _motor_time_count = millis();
+        _ft->_motor_time_count = millis();
     }
     // update motor on a timer here
 }

@@ -40,6 +40,9 @@ class FactoryTest
 {
 public:
     bool _is_test_mode;
+    uint32_t _motor_time_count = 0;
+    uint32_t _batv_time_count = 0;
+
 
     /* System */
     inline void _stuck_forever()

@@ -22,6 +22,7 @@ void FactoryTest::_rtc_init()
 void FactoryTest::_rtc_test()
 {
     printf("rtc test\n");
+    motor.reset();
 
     _canvas->setFont(&fonts::Font0);
 

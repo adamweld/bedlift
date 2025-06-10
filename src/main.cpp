@@ -17,12 +17,10 @@ void view_update();
 
 void setup()
 {
-    printf("I'm Alive!");
     ft.init();
     view_create(&ft);
 }
 
 void loop() {
     view_update();
-    ft.motor.update();
 }

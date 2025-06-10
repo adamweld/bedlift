@@ -24,7 +24,7 @@ void FactoryTest::_motor_user(int m_id)
         if (m_id == 0)
             snprintf(string_buffer, 20, "All Motors");
         else
-            snprintf(string_buffer, 20, "Motor %d", m_id+1);
+            snprintf(string_buffer, 20, "Motor %d", m_id);
 
         _motor_speed = _enc_pos * .5;
         motor.set_speed(_motor_speed, m_id);
@@ -36,6 +36,12 @@ void FactoryTest::_motor_user(int m_id)
         _canvas->drawCenterString(string_buffer, _canvas->width() / 2, 55);
 
         _canvas_update();
+
+        if (millis() - _motor_time_count > 500)
+        {
+            motor.update();
+            _motor_time_count = millis();
+        }
 
         _check_encoder();
         if (_check_next())

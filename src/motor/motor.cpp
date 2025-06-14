@@ -34,7 +34,7 @@ void Motor::init()
     for(cybergear_motor_t* m : _motors){
         printf("Intializing Motor CAN ID: 0x%02X\n", m->can_id);
 
-        ESP_ERROR_CHECK(cybergear_stop(m));
+        ESP_ERROR_CHECK_WITHOUT_ABORT(cybergear_stop(m));
         cybergear_set_mode(m, CYBERGEAR_MODE_SPEED);
         cybergear_set_limit_speed(m, MOTOR_LIMIT_SPEED);
         cybergear_set_limit_current(m, MOTOR_LIMIT_CURRENT);
@@ -46,9 +46,12 @@ void Motor::update()
 {
     /* request status */
     for(cybergear_motor_t* m : _motors){
-        ESP_ERROR_CHECK_WITHOUT_ABORT(cybergear_request_status(m));
-        ESP_ERROR_CHECK_WITHOUT_ABORT(cybergear_get_param(m, ADDR_ROTATION));
-        ESP_ERROR_CHECK_WITHOUT_ABORT(cybergear_get_param(m, ADDR_MECH_POS));
+        // ESP_ERROR_CHECK_WITHOUT_ABORT(cybergear_request_status(m));
+        // ESP_ERROR_CHECK_WITHOUT_ABORT(cybergear_get_param(m, ADDR_ROTATION));
+        // ESP_ERROR_CHECK_WITHOUT_ABORT(cybergear_get_param(m, ADDR_MECH_POS));
+        cybergear_request_status(m);
+        cybergear_get_param(m, ADDR_ROTATION);
+        cybergear_get_param(m, ADDR_MECH_POS);
     }
 
     /* handle CAN alerts */ 

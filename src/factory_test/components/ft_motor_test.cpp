@@ -1,18 +1,23 @@
 #include "../factory_test.h"
 
-void FactoryTest::_motor_user(int m_id)
+void FactoryTest::_motor_speed_control(const std::vector<int>& motor_ids)
 {
-    printf("Selected Motor %d\n", m_id);
+    printf("Selected Motors: ");
+    for(int i = 0; i < motor_ids.size(); i++) {
+        printf("%d", motor_ids[i]);
+        if(i < motor_ids.size() - 1) printf(", ");
+    }
+    printf("\n");
 
     _canvas->setFont(&fonts::Font0);
 
-    char string_buffer[20];
+    char string_buffer[30];
 
     _enc_pos = 0;
     _enc.setPosition(_enc_pos);
 
-    motor.enable(m_id);
-    motor.unlock(m_id);
+    // motor.enable(motor_ids);
+    motor.unlock(motor_ids);
 
     while (1)
     {
@@ -21,18 +26,29 @@ void FactoryTest::_motor_user(int m_id)
         _canvas->fillRect(0, 0, 240, 25, (uint32_t)0x163820);
         _canvas->setTextSize(2);
         _canvas->setTextColor((uint32_t)0x6AB8A0);
-        if (m_id == 0)
-            snprintf(string_buffer, 20, "All Motors");
-        else
-            snprintf(string_buffer, 20, "Motor %d", m_id);
+        
+        // Generate display string based on motor IDs
+        if (motor_ids.size() == 4) {
+            snprintf(string_buffer, 30, "All Motors");
+        } else if (motor_ids.size() == 1) {
+            snprintf(string_buffer, 30, "Motor %d", motor_ids[0]);
+        } else {
+            snprintf(string_buffer, 30, "Motors ");
+            for(int i = 0; i < motor_ids.size(); i++) {
+                char temp[5];
+                snprintf(temp, 5, "%d", motor_ids[i]);
+                strcat(string_buffer, temp);
+                if(i < motor_ids.size() - 1) strcat(string_buffer, ",");
+            }
+        }
 
         _motor_speed = _enc_pos * .5;
-        motor.set_speed(_motor_speed, m_id);
+        motor.set_speed(_motor_speed, motor_ids);
         _canvas->drawCenterString(string_buffer, _canvas->width() / 2, 5);
 
         _canvas->setTextSize(5);
         _canvas->setTextColor((uint32_t)0x163820);
-        snprintf(string_buffer, 20, "%d", _enc_pos);
+        snprintf(string_buffer, 30, "%d", _enc_pos);
         _canvas->drawCenterString(string_buffer, _canvas->width() / 2, 55);
 
         _canvas_update();
@@ -47,96 +63,13 @@ void FactoryTest::_motor_user(int m_id)
         if (_check_next())
         {
             _motor_speed = 0.0;
-            motor.set_speed(_motor_speed, m_id);
-            motor.lock(m_id);
+            motor.set_speed(_motor_speed, motor_ids);
+            motor.lock(motor_ids);
             // here we should drive against pawl
-            motor.disable(m_id);
+            motor.disable(motor_ids);
             break;
         }
     }
 
-    printf("quit motor test\n");
-}
-
-void FactoryTest::_motor_tilt(int m_id)
-{
-
-    // cases
-    // 1,2    3,4
-    // 2,4    1,3
-    if (m_id == 1) {
-        _t1 = 1;
-        _t2 = 2;
-    } else if (m_id == 2) {
-        _t1 = 3;
-        _t2 = 4;
-    } else if (m_id == 3) {
-        _t1 = 2;
-        _t2 = 4;
-    } else if (m_id == 4) {
-        _t1 = 3;
-        _t2 = 1;
-    }
-    printf("Selected Motors %d and %d\n", _t1, _t2);
-
-    _canvas->setFont(&fonts::Font0);
-
-    char string_buffer[20];
-
-    _enc_pos = 0;
-    _enc.setPosition(_enc_pos);
-
-    motor.enable(_t1);
-    motor.unlock(_t1);
-    motor.enable(_t2);
-    motor.unlock(_t2);
-
-    while (1)
-    {
-        _canvas->fillScreen((uint32_t)0x6AB8A0);
-
-        _canvas->fillRect(0, 0, 240, 25, (uint32_t)0x163820);
-        _canvas->setTextSize(2);
-        _canvas->setTextColor((uint32_t)0x6AB8A0);
-        if (m_id == 0)
-            snprintf(string_buffer, 20, "All Motors");
-        else
-            snprintf(string_buffer, 20, "Motor %d", m_id);
-
-        _motor_speed = _enc_pos * .5;
-        motor.set_speed(_motor_speed, _t1);
-        motor.set_speed(_motor_speed, _t2);
-
-        _canvas->drawCenterString(string_buffer, _canvas->width() / 2, 5);
-
-        _canvas->setTextSize(5);
-        _canvas->setTextColor((uint32_t)0x163820);
-        snprintf(string_buffer, 20, "%d", _enc_pos);
-        _canvas->drawCenterString(string_buffer, _canvas->width() / 2, 55);
-
-        _canvas_update();
-
-        if (millis() - _motor_time_count > 500)
-        {
-            motor.update();
-            _motor_time_count = millis();
-        }
-
-        _check_encoder();
-        if (_check_next())
-        {
-            _motor_speed = 0.0;
-            motor.set_speed(_motor_speed, _t1);
-            motor.set_speed(_motor_speed, _t2);
-            motor.lock(_t1); // done once
-            // here we should drive against pawl
-            motor.disable(_t1);
-            motor.disable(_t2);
-
-            
-            break;
-        }
-    }
-
-    printf("quit motor tilt\n");
+    printf("quit motor speed control\n");
 }

@@ -2,8 +2,12 @@
 
 void Motor::init()
 {
+    printf("=== Motor System Initialization ===\n");
+    
     // intialize CAN, only done once
-    // _motors[0].init_twai(RX_PIN, TX_PIN, /*serial_debug=*/true);
+    printf("Initializing CAN/TWAI transceiver...\n");
+    printf("TX Pin: %d, RX Pin: %d\n", TX_PIN, RX_PIN);
+    
     twai_general_config_t g_config = TWAI_GENERAL_CONFIG_DEFAULT(
 		(gpio_num_t) TX_PIN, 
 		(gpio_num_t) RX_PIN, 
@@ -12,34 +16,128 @@ void Motor::init()
     twai_filter_config_t f_config = TWAI_FILTER_CONFIG_ACCEPT_ALL();
 
     /* install TWAI driver */
-    ESP_ERROR_CHECK(twai_driver_install(&g_config, &t_config, &f_config));
-    ESP_ERROR_CHECK(twai_start());
-    ESP_ERROR_CHECK(twai_reconfigure_alerts(TWAI_ALERTS, NULL));
+    esp_err_t err = twai_driver_install(&g_config, &t_config, &f_config);
+    if (err != ESP_OK) {
+        ESP_LOGE(TAG, "TWAI driver install failed: %s", esp_err_to_name(err));
+        printf("ERROR: CAN transceiver initialization failed!\n");
+        return;
+    }
+    printf("TWAI driver installed successfully\n");
 
+    err = twai_start();
+    if (err != ESP_OK) {
+        ESP_LOGE(TAG, "TWAI start failed: %s", esp_err_to_name(err));
+        printf("ERROR: CAN transceiver start failed!\n");
+        return;
+    }
+    printf("TWAI started successfully\n");
+
+    err = twai_reconfigure_alerts(TWAI_ALERTS, NULL);
+    if (err != ESP_OK) {
+        ESP_LOGE(TAG, "TWAI alerts config failed: %s", esp_err_to_name(err));
+        printf("WARNING: CAN alerts configuration failed\n");
+    }
+
+    printf("Initializing relay controller...\n");
+    printf("SDA Pin: %d, SCL Pin: %d\n", SDA_PIN, SCL_PIN);
     relay.begin(Wire1,SDA_PIN,SCL_PIN);
     relay.SyncMode(true);
     relay.AllOff();
+    printf("Relay controller initialized\n");
 
     /* initialize all motors */
-	// cybergear_motor_t cybergear_motor;
+    printf("Initializing motor structures...\n");
+    printf("Master CAN ID: 0x%02X, Motor CAN IDs: 0x%02X, 0x%02X, 0x%02X, 0x%02X\n", 
+           MASTER_CAN_ID, M1_CAN_ID, M2_CAN_ID, M3_CAN_ID, M4_CAN_ID);
+    
 	cybergear_init(&m1, MASTER_CAN_ID, M1_CAN_ID, POLLING_RATE_TICKS);
     cybergear_init(&m2, MASTER_CAN_ID, M2_CAN_ID, POLLING_RATE_TICKS);
     cybergear_init(&m3, MASTER_CAN_ID, M3_CAN_ID, POLLING_RATE_TICKS);
     cybergear_init(&m4, MASTER_CAN_ID, M4_CAN_ID, POLLING_RATE_TICKS);
-	
-	// cybergear_enable(&m1);
-	// cybergear_set_position(&m1, 10.0); 
+    printf("Motor structures initialized\n");
 
-    // init motors one by one
-    for(cybergear_motor_t* m : _motors){
-        printf("Intializing Motor CAN ID: 0x%02X\n", m->can_id);
+    // Configure each motor
+    printf("Configuring motor parameters...\n");
+    for(int i = 0; i < NUM_MOTORS; i++){
+        cybergear_motor_t* m = _motors[i];
+        printf("Configuring Motor %d (CAN ID: 0x%02X)...\n", i+1, m->can_id);
+        
+        // Test motor presence by requesting status and waiting for response
+        printf("Testing Motor %d presence...\n", i+1);
+        esp_err_t err = cybergear_request_status(m);
+        if (err != ESP_OK) {
+            printf("ERROR: Motor %d status request failed: %s\n", i+1, esp_err_to_name(err));
+            printf("Motor %d configuration FAILED - CAN transmission error\n", i+1);
+            continue;
+        }
+        
+        // Wait for response with timeout
+        bool motor_responded = false;
+        uint32_t start_time = millis();
+        const uint32_t response_timeout_ms = 500;
+        
+        while(millis() - start_time < response_timeout_ms) {
+            twai_message_t message;
+            if(twai_receive(&message, pdMS_TO_TICKS(10)) == ESP_OK) {
+                if(cybergear_process_message(m, &message) == ESP_OK) {
+                    motor_responded = true;
+                    break;
+                }
+            }
+        }
+        
+        if (!motor_responded) {
+            printf("ERROR: Motor %d did not respond to status request\n", i+1);
+            printf("Motor %d configuration FAILED - No response (motor unplugged?)\n", i+1);
+            continue;
+        }
+        
+        printf("Motor %d responded, proceeding with configuration...\n", i+1);
+        bool motor_ok = true;
 
-        ESP_ERROR_CHECK_WITHOUT_ABORT(cybergear_stop(m));
-        cybergear_set_mode(m, CYBERGEAR_MODE_SPEED);
-        cybergear_set_limit_speed(m, MOTOR_LIMIT_SPEED);
-        cybergear_set_limit_current(m, MOTOR_LIMIT_CURRENT);
-        cybergear_set_limit_torque(m, MOTOR_LIMIT_TORQUE);
+        err = cybergear_stop(m);
+        if (err != ESP_OK) {
+            ESP_LOGE(TAG, "Motor %d stop failed: %s", i+1, esp_err_to_name(err));
+            printf("WARNING: Motor %d stop command failed\n", i+1);
+            motor_ok = false;
+        }
+
+        err = cybergear_set_mode(m, CYBERGEAR_MODE_SPEED);
+        if (err != ESP_OK) {
+            ESP_LOGE(TAG, "Motor %d mode set failed: %s", i+1, esp_err_to_name(err));
+            printf("ERROR: Motor %d mode configuration failed\n", i+1);
+            motor_ok = false;
+        }
+
+        err = cybergear_set_limit_speed(m, MOTOR_LIMIT_SPEED);
+        if (err != ESP_OK) {
+            ESP_LOGE(TAG, "Motor %d speed limit failed: %s", i+1, esp_err_to_name(err));
+            printf("ERROR: Motor %d speed limit failed\n", i+1);
+            motor_ok = false;
+        }
+
+        err = cybergear_set_limit_current(m, MOTOR_LIMIT_CURRENT);
+        if (err != ESP_OK) {
+            ESP_LOGE(TAG, "Motor %d current limit failed: %s", i+1, esp_err_to_name(err));
+            printf("ERROR: Motor %d current limit failed\n", i+1);
+            motor_ok = false;
+        }
+
+        err = cybergear_set_limit_torque(m, MOTOR_LIMIT_TORQUE);
+        if (err != ESP_OK) {
+            ESP_LOGE(TAG, "Motor %d torque limit failed: %s", i+1, esp_err_to_name(err));
+            printf("ERROR: Motor %d torque limit failed\n", i+1);
+            motor_ok = false;
+        }
+
+        if (motor_ok) {
+            printf("Motor %d configured successfully\n", i+1);
+        } else {
+            printf("Motor %d configuration FAILED\n", i+1);
+        }
     }
+    
+    printf("=== Motor System Initialization Complete ===\n");
 }
 
 void Motor::update()
@@ -55,19 +153,23 @@ void Motor::update()
     }
 
     /* handle CAN alerts */ 
-    twai_read_alerts(&alerts_triggered, POLLING_RATE_TICKS);
+    twai_read_alerts(&alerts_triggered, 0);
     twai_get_status_info(&twai_status);
     if (alerts_triggered & TWAI_ALERT_ERR_PASS)
     {
         ESP_LOGE(TAG, "Alert: TWAI controller has become error passive.");
+        printf("CAN ERROR: Controller entered error passive state\n");
     }
     if (alerts_triggered & TWAI_ALERT_BUS_ERROR)
     {
         ESP_LOGE(TAG, "Alert: An error has occurred on the bus.Bus error count: %lu\n", twai_status.bus_error_count);
+        printf("CAN ERROR: Bus error detected, count: %lu\n", twai_status.bus_error_count);
     }
     if (alerts_triggered & TWAI_ALERT_TX_FAILED)
     {
         ESP_LOGE(TAG, "Alert: The Transmission failed. buffered: %lu\terror: %lu\tfailed: %lu\n", twai_status.msgs_to_tx, twai_status.tx_error_counter, twai_status.tx_failed_count);
+        printf("CAN ERROR: Transmission failed - buffered: %lu, errors: %lu, failed: %lu\n", 
+               twai_status.msgs_to_tx, twai_status.tx_error_counter, twai_status.tx_failed_count);
     }
 
     /* handle received messages */
@@ -140,44 +242,70 @@ void Motor::print_motor(cybergear_motor_t* m)
 }
 
 
-void Motor::set_speed(float speed, int m_id)
+void Motor::set_speed(float speed, const std::vector<int>& m_ids)
 {
-    if(m_id == 0) {
-       for(cybergear_motor_t* m : _motors){ cybergear_set_speed(m, speed); }
-    }
-    else{
-        cybergear_set_speed(_motors[m_id-1], speed);
+    for(int m_id : m_ids) {
+        if(m_id >= 1 && m_id <= NUM_MOTORS) {
+            cybergear_set_speed(_motors[m_id-1], speed);
+        }
     }
 }
 
-void Motor::enable(int m_id)
+void Motor::enable(const std::vector<int>& m_ids)
 {
-    if(m_id == 0) {
-       for(cybergear_motor_t* m : _motors){ cybergear_enable(m); }
-    }
-    else{
-        cybergear_enable(_motors[m_id-1]);
-    }
-}
-
-void Motor::disable(int m_id)
-{
-    if(m_id == 0) {
-       for(cybergear_motor_t* m : _motors){ cybergear_stop(m); }
-    }
-    else{
-        cybergear_stop(_motors[m_id-1]);
+    for(int m_id : m_ids) {
+        if(m_id >= 1 && m_id <= NUM_MOTORS) {
+            cybergear_enable(_motors[m_id-1]);
+        }
     }
 }
 
-void Motor::unlock(int m_id)
+void Motor::disable(const std::vector<int>& m_ids)
 {
-    relay.Write4Relay(3,true);
+    for(int m_id : m_ids) {
+        if(m_id >= 1 && m_id <= NUM_MOTORS) {
+            cybergear_stop(_motors[m_id-1]);
+        }
+    }
 }
 
-void Motor::lock(int m_id)
+void Motor::unlock(const std::vector<int>& m_ids)
 {
-    relay.Write4Relay(3,false);
+    // Disengage relay (shared between all motors)
+    relay.Write4Relay(3, true);
+    
+    // Enable motors
+    for(int m_id : m_ids) {
+        if(m_id >= 1 && m_id <= NUM_MOTORS) {
+            cybergear_enable(_motors[m_id-1]);
+        }
+    }
+}
+
+void Motor::lock(const std::vector<int>& m_ids)
+{
+    // Engage relay (shared between all motors)
+    relay.Write4Relay(3, false);
+    
+    // Drive motors at 1 rad/s for 400ms to softly engage against solenoid
+    const float lock_speed = 1.0f;
+    const uint32_t lock_duration_ms = 400;
+    
+    for(int m_id : m_ids) {
+        if(m_id >= 1 && m_id <= NUM_MOTORS) {
+            cybergear_set_speed(_motors[m_id-1], lock_speed);
+        }
+    }
+    
+    // Wait for motors to drive against the lock
+    delay(lock_duration_ms);
+    
+    // Disable motors
+    for(int m_id : m_ids) {
+        if(m_id >= 1 && m_id <= NUM_MOTORS) {
+            cybergear_stop(_motors[m_id-1]);
+        }
+    }
 }
 
 void Motor::reset()

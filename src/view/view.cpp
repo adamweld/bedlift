@@ -220,22 +220,15 @@ class LauncherMenu : public SmoothOptions
     {
         int matching_index = getSelectedOptionIndex();
         if (matching_index == 0)
-            _ft->_motor_user(0);
+            _ft->_motor_speed_control({1, 2, 3, 4});  // All motors
         else if (matching_index == 1)
-            // _ft->_motor_user(1);
-            _ft->_motor_tilt(1);
-
+            _ft->_motor_speed_control({1, 2});  // Motors 1,2
         else if (matching_index == 2)
-            // _ft->_motor_user(2);
-            _ft->_motor_tilt(2);
-
+            _ft->_motor_speed_control({3, 4});  // Motors 3,4
         else if (matching_index == 3)
-            // _ft->_motor_user(3);
-            _ft->_motor_tilt(3);
-
+            _ft->_motor_speed_control({2, 4});  // Motors 2,4
         else if (matching_index == 4)
-            // _ft->_motor_user(4);
-            _ft->_motor_tilt(4);
+            _ft->_motor_speed_control({1, 3});  // Motors 1,3
 
         // else if (matching_index == 5)
         //     _ft->_disp_test();
@@ -319,7 +312,7 @@ void view_update()
 
     }
 
-    if (millis() - _ft->_motor_time_count > 500)
+    if (millis() - _ft->_motor_time_count > 100)
     {
         _ft->motor.update();
         _ft->_motor_time_count = millis();

@@ -6,6 +6,7 @@
 #include "cybergear_utils.h"
 #include <M5_4Relay.h>
 #include <Wire.h>
+#include <vector>
 
 // Pins used to connect to CAN bus transceiver:
 #define RX_PIN 1
@@ -36,7 +37,7 @@
 		TWAI_ALERT_TX_FAILED | TWAI_ALERT_ERR_PASS | \
 		TWAI_ALERT_BUS_ERROR )
 
-#define POLLING_RATE_TICKS pdMS_TO_TICKS(100)
+#define POLLING_RATE_TICKS pdMS_TO_TICKS(10)
 
 #define TAG "motor"
 
@@ -75,10 +76,16 @@ public:
     void print_motor(cybergear_motor_t* m);
     // void check_alerts();
     // void handle_rx_message(twai_message_t& message);
-    void set_speed(float speed, int m_id);
-    void enable(int m_id);
-    void disable(int m_id);
-    void unlock(int m_id);
-    void lock(int m_id);
+    void set_speed(float speed, const std::vector<int>& m_ids);
+    void enable(const std::vector<int>& m_ids);
+    void disable(const std::vector<int>& m_ids);
+    void unlock(const std::vector<int>& m_ids);
+    void lock(const std::vector<int>& m_ids);
+    
+    void set_speed(float speed, int m_id) { set_speed(speed, std::vector<int>{m_id}); }
+    void enable(int m_id) { enable(std::vector<int>{m_id}); }
+    void disable(int m_id) { disable(std::vector<int>{m_id}); }
+    void unlock(int m_id) { unlock(std::vector<int>{m_id}); }
+    void lock(int m_id) { lock(std::vector<int>{m_id}); }
     void reset();
 };

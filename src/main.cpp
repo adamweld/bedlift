@@ -18,8 +18,16 @@ void view_update();
 void setup()
 {
     delay(5000);
+    printf("\n\n=== BEDLIFT SYSTEM STARTING ===\n");
+    printf("Firmware Version: %s\n", FW_VERISON);
+    printf("ESP32 Ready, initializing factory test...\n");
+    
     ft.init();
+    printf("Factory test initialized\n");
+    
     view_create(&ft);
+    printf("View created, entering main loop\n");
+    printf("=== STARTUP COMPLETE ===\n\n");
 }
 
 void loop() {

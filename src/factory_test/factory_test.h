@@ -85,7 +85,10 @@ public:
     /* Motor */
     Motor motor;
     float _motor_speed;
+    int _t1;
+    int _t2;
     void _motor_user(int m_id);
+    void _motor_tilt(int m_id);
 
     /* Buzzer */
     inline void _tone(unsigned int frequency, unsigned long duration = 0UL) { tone(BUZZ_PIN, frequency, duration); }

@@ -19,9 +19,9 @@
 #define NUM_MOTORS 4
 
 #define M1_CAN_ID 0x01
-#define M2_CAN_ID 0x02
+#define M2_CAN_ID 0x04
 #define M3_CAN_ID 0x03
-#define M4_CAN_ID 0x04
+#define M4_CAN_ID 0x02
 
 
 #define MOTOR_MODE CYBERGEAR_MODE_SPEED

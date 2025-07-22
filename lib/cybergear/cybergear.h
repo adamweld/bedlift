@@ -87,6 +87,7 @@ esp_err_t cybergear_stop(cybergear_motor_t *motor);
 esp_err_t cybergear_set_mode(cybergear_motor_t *motor, cybergear_mode_e mode);
 
 esp_err_t cybergear_get_param(cybergear_motor_t *motor, uint16_t index);
+esp_err_t cybergear_request_param(cybergear_motor_t *motor, uint16_t index);
 
 esp_err_t cybergear_set_motor_can_id(cybergear_motor_t *motor, uint8_t can_id);
 esp_err_t cybergear_set_mech_position_to_zero(cybergear_motor_t *motor);

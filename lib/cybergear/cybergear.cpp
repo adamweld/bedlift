@@ -48,6 +48,14 @@ esp_err_t cybergear_get_param(cybergear_motor_t *motor, uint16_t index)
     return _send_can_package(motor, CMD_RAM_READ, 8, data);
 }
 
+esp_err_t cybergear_request_param(cybergear_motor_t *motor, uint16_t index) //TODO VALIDATE
+{
+    motor->params.updated = false;
+    uint8_t data[8] = {0x00};
+    memcpy(&data[0], &index, 2);
+    return _send_can_package(motor, CMD_GET_SINGLE_PARAM, 8, data);
+}
+
 esp_err_t cybergear_set_motor_can_id(cybergear_motor_t *motor, uint8_t can_id)
 {
     uint8_t data[8] = {0x00};
@@ -88,6 +96,8 @@ esp_err_t cybergear_process_message(cybergear_motor_t *motor, twai_message_t *me
         case CMD_REQUEST:
             return _process_motor_message(motor, message);
         case CMD_RAM_READ:
+            return _process_param_message(motor, message);
+        case CMD_GET_SINGLE_PARAM:
             return _process_param_message(motor, message);
         case CMD_GET_MOTOR_FAIL:
             return _process_fault_message(motor, message);

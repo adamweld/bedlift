@@ -10,6 +10,7 @@
 #define CMD_RAM_READ                 0x11
 #define CMD_RAM_WRITE                0x12
 #define CMD_GET_STATUS               0x15
+#define CMD_GET_SINGLE_PARAM         0x17   //TODO validat
 #define CMD_GET_MOTOR_FAIL              21
 
 #define ADDR_SPEED_KP              0x2014

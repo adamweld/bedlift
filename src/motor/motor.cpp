@@ -95,6 +95,7 @@ void Motor::init()
         printf("Motor %d responded, proceeding with configuration...\n", i+1);
         bool motor_ok = true;
 
+        err = cybergear_set_mech_position_to_zero(m);
         err = cybergear_stop(m);
         if (err != ESP_OK) {
             ESP_LOGE(TAG, "Motor %d stop failed: %s", i+1, esp_err_to_name(err));
@@ -148,12 +149,14 @@ void Motor::update()
         // ESP_ERROR_CHECK_WITHOUT_ABORT(cybergear_get_param(m, ADDR_ROTATION));
         // ESP_ERROR_CHECK_WITHOUT_ABORT(cybergear_get_param(m, ADDR_MECH_POS));
         cybergear_request_status(m);
-        cybergear_get_param(m, ADDR_ROTATION);
-        cybergear_get_param(m, ADDR_MECH_POS);
+        cybergear_request_param(m, ADDR_ROTATION);
+        cybergear_request_param(m, ADDR_MECH_POS);
+        cybergear_request_param(m, ADDR_VBUS);
+
     }
 
     /* handle CAN alerts */ 
-    twai_read_alerts(&alerts_triggered, 0);
+    twai_read_alerts(&alerts_triggered, pdMS_TO_TICKS(10));
     twai_get_status_info(&twai_status);
     if (alerts_triggered & TWAI_ALERT_ERR_PASS)
     {
@@ -207,8 +210,9 @@ void Motor::update()
 
             print_motor(m);
         }
+        printf("VBUS:%.2f\n", _motors[0]->params.vbus);
             // printf("M1 POS:%f V:%f T:%f temp:%f\t", status.position, status.speed, status.torque, status.temperature);
-        printf("\n");
+        // printf("\n");
     }
 }
 
@@ -235,12 +239,11 @@ void Motor::print_motor(cybergear_motor_t* m)
 
     }   
 
-    printf("M%d:%c%c V:%.2f R:%f T:%.2f\t",m->can_id, state_as_char(m->status.state),fault_char, m->status.speed, m->params.mech_pos, m->status.torque);
+    printf("M%d:%c%c V:%.2f P:%.2f R:%d T:%.2f\t",m->can_id, state_as_char(m->status.state),fault_char, m->status.speed, m->status.position, m->params.rotation, m->status.torque);
 
     /* get cybergear faults */
    
 }
-
 
 void Motor::set_speed(float speed, const std::vector<int>& m_ids)
 {
@@ -273,13 +276,18 @@ void Motor::unlock(const std::vector<int>& m_ids)
 {
     // Disengage relay (shared between all motors)
     relay.Write4Relay(3, true);
+
+    const float unlock_speed = -3.0f;
+    const uint32_t unlock_duration_ms = 350;
     
     // Enable motors
     for(int m_id : m_ids) {
         if(m_id >= 1 && m_id <= NUM_MOTORS) {
             cybergear_enable(_motors[m_id-1]);
+            cybergear_set_speed(_motors[m_id-1], unlock_speed);
         }
     }
+    delay(unlock_duration_ms);
 }
 
 void Motor::lock(const std::vector<int>& m_ids)
@@ -288,8 +296,8 @@ void Motor::lock(const std::vector<int>& m_ids)
     relay.Write4Relay(3, false);
     
     // Drive motors at 1 rad/s for 400ms to softly engage against solenoid
-    const float lock_speed = 1.0f;
-    const uint32_t lock_duration_ms = 400;
+    const float lock_speed = 2.0f;
+    const uint32_t lock_duration_ms = 600;
     
     for(int m_id : m_ids) {
         if(m_id >= 1 && m_id <= NUM_MOTORS) {

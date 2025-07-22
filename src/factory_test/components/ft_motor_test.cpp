@@ -55,7 +55,7 @@ void FactoryTest::_motor_speed_control(const std::vector<int>& motor_ids)
 
         if (millis() - _motor_time_count > 500)
         {
-            motor.update();
+            motor.idle_update();
             _motor_time_count = millis();
         }
 

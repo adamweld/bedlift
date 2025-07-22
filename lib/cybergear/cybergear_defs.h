@@ -27,12 +27,12 @@
 #define ADDR_LIMIT_SPEED           0x7017
 #define ADDR_LIMIT_CURRENT         0x7018
 
-#define ADDR_IQ_REF 0x7006
+#define ADDR_IQ_REF                0x7006
 #define ADDR_LOC_REF 0x7016
 #define ADDR_MECH_POS 0x7019
 #define ADDR_IQF 0x701A
 #define ADDR_MECH_VEL 0x701B
-#define ADDR_VBUS 0x701C
+#define ADDR_VBUS                  0x701C
 #define ADDR_ROTATION 0x701D
 #define ADDR_LOC_KP 0x701E
 #define ADDR_SPD_KP 0x701F

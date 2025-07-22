@@ -141,19 +141,83 @@ void Motor::init()
     printf("=== Motor System Initialization Complete ===\n");
 }
 
-void Motor::update()
+void Motor::idle_update()
 {
-    /* request status */
+    /* request parameters while idle */
     for(cybergear_motor_t* m : _motors){
-        // ESP_ERROR_CHECK_WITHOUT_ABORT(cybergear_request_status(m));
-        // ESP_ERROR_CHECK_WITHOUT_ABORT(cybergear_get_param(m, ADDR_ROTATION));
-        // ESP_ERROR_CHECK_WITHOUT_ABORT(cybergear_get_param(m, ADDR_MECH_POS));
         cybergear_request_status(m);
         cybergear_request_param(m, ADDR_ROTATION);
         cybergear_request_param(m, ADDR_MECH_POS);
         cybergear_request_param(m, ADDR_VBUS);
-
     }
+
+    /* handle CAN alerts */ 
+    twai_read_alerts(&alerts_triggered, pdMS_TO_TICKS(10));
+    twai_get_status_info(&twai_status);
+    if (alerts_triggered & TWAI_ALERT_ERR_PASS)
+    {
+        ESP_LOGE(TAG, "Alert: TWAI controller has become error passive.");
+        printf("CAN ERROR: Controller entered error passive state\n");
+    }
+    if (alerts_triggered & TWAI_ALERT_BUS_ERROR)
+    {
+        ESP_LOGE(TAG, "Alert: An error has occurred on the bus.Bus error count: %lu\n", twai_status.bus_error_count);
+        printf("CAN ERROR: Bus error detected, count: %lu\n", twai_status.bus_error_count);
+    }
+    if (alerts_triggered & TWAI_ALERT_TX_FAILED)
+    {
+        ESP_LOGE(TAG, "Alert: The Transmission failed. buffered: %lu\terror: %lu\tfailed: %lu\n", twai_status.msgs_to_tx, twai_status.tx_error_counter, twai_status.tx_failed_count);
+        printf("CAN ERROR: Transmission failed - buffered: %lu, errors: %lu, failed: %lu\n", 
+               twai_status.msgs_to_tx, twai_status.tx_error_counter, twai_status.tx_failed_count);
+    }
+
+    /* handle received messages */
+    if (alerts_triggered & TWAI_ALERT_RX_DATA) 
+    {
+        while (twai_receive(&message, 0) == ESP_OK)
+        {
+            for (cybergear_motor_t* m : _motors) {
+                esp_err_t response = cybergear_process_message(m, &message);
+                if (response == ESP_ERR_NOT_FOUND) {
+                    continue;
+                }
+                else if (response == ESP_OK) {
+                    break;
+                }
+                else {
+                    ESP_ERROR_CHECK_WITHOUT_ABORT(response);
+                }
+            }
+        }
+    }
+    
+    /* print parameter values for each motor */
+    printf("IDLE PARAMS: ");
+    for(cybergear_motor_t* m : _motors){
+        printf("M%d[R:%d P:%.2f V:%.1f] ", 
+               m->can_id, 
+               m->params.rotation, 
+               m->params.mech_pos, 
+               m->params.vbus);
+    }
+    printf("\n");
+}
+
+void Motor::update()
+{
+    /* request status */
+
+    // this doesn't seem to work when running
+    // for(cybergear_motor_t* m : _motors){
+    //     // ESP_ERROR_CHECK_WITHOUT_ABORT(cybergear_request_status(m));
+    //     // ESP_ERROR_CHECK_WITHOUT_ABORT(cybergear_get_param(m, ADDR_ROTATION));
+    //     // ESP_ERROR_CHECK_WITHOUT_ABORT(cybergear_get_param(m, ADDR_MECH_POS));
+    //     // cybergear_request_status(m);
+    //     cybergear_request_param(m, ADDR_ROTATION);
+    //     cybergear_request_param(m, ADDR_MECH_POS);
+    //     cybergear_request_param(m, ADDR_VBUS);
+// 
+    // }
 
     /* handle CAN alerts */ 
     twai_read_alerts(&alerts_triggered, pdMS_TO_TICKS(10));

@@ -83,8 +83,20 @@ esp_err_t cybergear_request_status(cybergear_motor_t *motor)
 
 esp_err_t cybergear_process_message(cybergear_motor_t *motor, twai_message_t *message)
 {
-    uint8_t can_id = (message->identifier & 0xFF00) >> 8;
     uint8_t packet_type = (message->identifier & 0x3F000000) >> 24;
+    uint8_t can_id;
+    
+    // Extract motor CAN ID based on packet type (based on observed behavior)
+    if (packet_type == CMD_REQUEST) {
+        // Type 2 (0x02): Motor in bits 15-8, Host in bits 7-0
+        can_id = (message->identifier & 0xFF00) >> 8;
+    } else if (packet_type == CMD_GET_SINGLE_PARAM || packet_type == CMD_RAM_READ) {
+        // Type 17 (0x17): Motor in bits 7-0, Host in bits 15-8  
+        can_id = message->identifier & 0xFF;
+    } else {
+        // Default: assume motor in bits 15-8
+        can_id = (message->identifier & 0xFF00) >> 8;
+    }
 
     if(can_id != motor->can_id)
     {
@@ -96,8 +108,8 @@ esp_err_t cybergear_process_message(cybergear_motor_t *motor, twai_message_t *me
         case CMD_REQUEST:
             return _process_motor_message(motor, message);
         case CMD_RAM_READ:
-            return _process_param_message(motor, message);
         case CMD_GET_SINGLE_PARAM:
+            // printf("Processing parameter message\n");
             return _process_param_message(motor, message);
         case CMD_GET_MOTOR_FAIL:
             return _process_fault_message(motor, message);
@@ -313,6 +325,11 @@ esp_err_t _process_fault_message(cybergear_motor_t *motor, twai_message_t *messa
 esp_err_t _process_param_message(cybergear_motor_t *motor, twai_message_t *message)
 {
     uint16_t index = message->data[1] << 8 | message->data[0];
+    printf(">>> PROCESSING PARAM MESSAGE <<<\n");
+    printf("Parameter Index: 0x%04X\n", index);
+    printf("Raw data bytes: %02X %02X %02X %02X %02X %02X %02X %02X\n",
+           message->data[0], message->data[1], message->data[2], message->data[3],
+           message->data[4], message->data[5], message->data[6], message->data[7]);
 
     uint8_t uint8_data;
     memcpy(&uint8_data, &message->data[4], sizeof(uint8_t));
@@ -384,6 +401,7 @@ esp_err_t _process_param_message(cybergear_motor_t *motor, twai_message_t *messa
         break;
     }
     motor->params.updated = true;
+    printf("Parameter 0x%04X successfully updated in struct!\n", index);
     return ESP_OK;
 }
 

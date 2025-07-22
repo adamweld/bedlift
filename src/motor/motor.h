@@ -72,6 +72,8 @@ public:
         // _motors[3] = &m4;
     }
     void init();
+    void idle_update();
+
     void update();
     void print_motor(cybergear_motor_t* m);
     // void check_alerts();

@@ -314,7 +314,7 @@ void view_update()
 
     if (millis() - _ft->_motor_time_count > 100)
     {
-        _ft->motor.update();
+        _ft->motor.idle_update();
         _ft->_motor_time_count = millis();
     }
     // update motor on a timer here
